@@ -36,15 +36,16 @@ namespace Pacco.Services.Availability.Api
                 .Configure(app => app
                     .UserInfrastructure() //rejestracja z warstwy infrastruktury
                     .UseRouting() //korzystanie z routingu
-                    //podejscie klasyczne do controllerow
-                    //.UseEndpoints(e => e.MapControllers()));  //umożliwia korzystanie z controllerów 
-                    //podejście convey do controllerow
+                                  //podejscie klasyczne do controllerow
+                                  //.UseEndpoints(e => e.MapControllers()));  //umożliwia korzystanie z controllerów 
+                                  //podejście convey do controllerow
                     .UseDispatcherEndpoints(endpoints => endpoints
                         .Get("", ctx => ctx.Response.WriteAsync(
                             ctx.RequestServices.GetService<AppOptions>().Name))
-                        .Get<GetResources, IEnumerable<ResourceDto>>("resources}")
+                        .Get<GetResources, IEnumerable<ResourceDto>>("resources")
                         .Get<GetResource, ResourceDto>("resources/{resourceId}")
                         .Post<AddResource>("resources", afterDispatch: (cmd, ctx) =>
-                            ctx.Response.Created($"resources/{cmd.ResourceId}"))));
+                            ctx.Response.Created($"resources/{cmd.ResourceId}"))
+                        .Post<ReserveResource>("resources/{resourceId}/reservations/{dateTime}")));
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Pacco.Services.Availability.Core.Exceptions
 {
-    internal class InvalidAggregateIdException : DomainExceptionBase
+    internal class InvalidAggregateIdException : DomainException
     {
         public override string Code => "invalid_aggregate_id";
 

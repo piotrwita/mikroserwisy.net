@@ -8,7 +8,7 @@ namespace Pacco.Services.Availability.Core.Entietes
 {
     public class AggregateId : IEquatable<AggregateId>
     {
-        public Guid Value { get; set; }
+        public Guid Value { get; }
 
         public AggregateId() : this(Guid.NewGuid())
         { 

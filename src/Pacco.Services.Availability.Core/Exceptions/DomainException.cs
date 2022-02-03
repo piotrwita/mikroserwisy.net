@@ -2,11 +2,11 @@
 
 namespace Pacco.Services.Availability.Core.Exceptions
 {
-    public abstract class DomainExceptionBase : Exception
+    public abstract class DomainException : Exception
     {
         public abstract string Code { get; }
 
-        protected DomainExceptionBase(string message) : base(message)
+        protected DomainException(string message) : base(message)
         {
         }
     }

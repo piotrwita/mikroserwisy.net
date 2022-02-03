@@ -64,5 +64,42 @@ namespace Pacco.Services.Availability.Core.Entietes
 
             return resource;
         }
+
+        //ladnie ukryte w agregacie jako metoda zmieniajaca stan
+        //zadbane by niezmienniki nie byly w jakikolwiek sposob naruszone
+        public void AddReservation(Reservation reservation)
+        {
+            //nie zrobimy singleordefault bo mamy structy
+            var hasCollidingReservation = _reservations.Any(HasTheSameReservationDate);
+            //warunek obslugujacy wewnatrz cale flow odpowiedzialne za wywlaszczenie
+            if (hasCollidingReservation)
+            {
+                var collidingReservation = _reservations.First(HasTheSameReservationDate);
+                if (collidingReservation.Priority >= reservation.Priority)
+                {
+                    throw new CannotExpropriateReservationException(Id, reservation.DateTime.Date);
+                }
+
+                //proba usuniecia
+                if(_reservations.Remove(collidingReservation))
+                {
+                    //zdarzenie domenowe - rezewujac rezerwacje dla tej daty po wywlasczeniu
+                    //jakas rezerwacja zostala anulowana
+                    AddEvent(new ReservationCanceled(this, collidingReservation));
+                }
+            }
+
+            //proba dodania
+            if (_reservations.Add(reservation))
+            {
+                //zdarzenie domenowe
+                //rezerwacja zostala dodana
+                AddEvent(new ReservationCanceled(this, reservation));
+            }
+
+
+            //local function
+            bool HasTheSameReservationDate(Reservation r) => r.DateTime.Date == reservation.DateTime.Date;
+        }
     }
 }

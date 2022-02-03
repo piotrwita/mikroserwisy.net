@@ -11,9 +11,9 @@ namespace Pacco.Services.Availability.Infrastructure.Exceptions
         public ExceptionResponse Map(Exception exception)
             => exception switch
             {
-                DomainExceptionBase ex => new ExceptionResponse(new { code = ex.Code, reason = ex.Message }, 
+                DomainException ex => new ExceptionResponse(new { code = ex.Code, reason = ex.Message }, 
                     HttpStatusCode.BadRequest),
-                AppExceptionBase ex => new ExceptionResponse(new { code = ex.Code, reason = ex.Message }, 
+                AppException ex => new ExceptionResponse(new { code = ex.Code, reason = ex.Message }, 
                     HttpStatusCode.BadRequest),
                 _ => new ExceptionResponse(new { code = "error", reason = "There was an error." }, 
                     HttpStatusCode.InternalServerError)
