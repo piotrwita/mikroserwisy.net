@@ -45,7 +45,7 @@ namespace Pacco.Services.Availability.Core.Entietes
         //imlicit nam pozwala bez jawnego castowania w nawiasach przechodzenie z jednego typu na drugi - w tym przypadku guid mozemy przypisywac do AggreateId
         public static implicit operator Guid(AggregateId id) => id.Value;
         //i vice versa
-        public static implicit operator AggregateId(Guid aggregateId) => new AggregateId();
+        public static implicit operator AggregateId(Guid aggregateId) => new AggregateId(aggregateId);
 
         //informacja na poziomie logowania naszej wartosci guid
         public override string ToString() => Value.ToString();
