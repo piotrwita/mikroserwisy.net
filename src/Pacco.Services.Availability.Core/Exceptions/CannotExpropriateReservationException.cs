@@ -2,7 +2,7 @@
 
 namespace Pacco.Services.Availability.Core.Exceptions
 {
-    internal class CannotExpropriateReservationException : DomainException
+    public class CannotExpropriateReservationException : DomainException
     {
         public override string Code => "cannot_expropriate_reservation";
 

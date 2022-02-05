@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Pacco.Services.Availability.Application.Exceptions
 {
-    internal class ResourceAlreadyExistsException : AppException
+    public class ResourceAlreadyExistsException : AppException
     {
         public override string Code => "resource_already_exists";
         public Guid ResourceId { get; set; }

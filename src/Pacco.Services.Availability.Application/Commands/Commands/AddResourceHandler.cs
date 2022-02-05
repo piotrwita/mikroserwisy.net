@@ -1,5 +1,7 @@
 ﻿using Convey.CQRS.Commands;
+using Pacco.Services.Availability.Application.Events;
 using Pacco.Services.Availability.Application.Exceptions;
+using Pacco.Services.Availability.Application.Srervices;
 using Pacco.Services.Availability.Core.Entietes;
 using Pacco.Services.Availability.Core.Repositories;
 using System;
@@ -12,10 +14,12 @@ namespace Pacco.Services.Availability.Application.Commands.Commands
     public class AddResourceHandler : ICommandHandler<AddResource>
     {
         private readonly IResourcesRepository _resourcesRepository;
+        private readonly IEventProcessor _eventProcessor;
 
-        public AddResourceHandler(IResourcesRepository resourcesRepository)
+        public AddResourceHandler(IResourcesRepository resourcesRepository, IEventProcessor eventProcessor)
         {
             _resourcesRepository = resourcesRepository;
+            _eventProcessor = eventProcessor;
         }
 
         public async Task HandleAsync(AddResource command)
@@ -30,6 +34,8 @@ namespace Pacco.Services.Availability.Application.Commands.Commands
             var resource = Resource.Create(command.ResourceId, command.Tags);
             //zapis do bazy
             await _resourcesRepository.AddAsync(resource);
+            //zdarzenie po fakcie, czyli po zapisie do repo
+            await _eventProcessor.ProcessAsync(resource.Events);
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Pacco.Services.Availability.Application.Exceptions
 {
-    internal class ResourceNotFoundException : AppException
+    public class ResourceNotFoundException : AppException
     {
         public override string Code => "resource_not_found";
         public Guid ResourceId { get; set; }
