@@ -1,7 +1,10 @@
 ﻿using Convey;
+using Convey.CQRS.Commands;
 using Convey.CQRS.Queries;
 using Convey.Docs.Swagger;
 using Convey.MessageBrokers.CQRS;
+using Convey.MessageBrokers.Outbox;
+using Convey.MessageBrokers.Outbox.Mongo;
 using Convey.MessageBrokers.RabbitMQ;
 using Convey.Persistence.MongoDB;
 using Convey.WebApi;
@@ -13,6 +16,7 @@ using Pacco.Services.Availability.Application;
 using Pacco.Services.Availability.Application.Events;
 using Pacco.Services.Availability.Application.Srervices;
 using Pacco.Services.Availability.Core.Repositories;
+using Pacco.Services.Availability.Infrastructure.Decorators;
 using Pacco.Services.Availability.Infrastructure.Exceptions;
 using Pacco.Services.Availability.Infrastructure.Mongo.Documents;
 using Pacco.Services.Availability.Infrastructure.Mongo.Repositories;
@@ -33,6 +37,7 @@ namespace Pacco.Services.Availability.Infrastructure
             builder.Services.AddTransient<IMessageBroker, MessageBroker>();
             builder.Services.AddTransient<IEventProcessor, EventProcessor>();
             builder.Services.AddSingleton<IEventMapper, EventMapper>();
+            builder.Services.TryDecorate(typeof(ICommandHandler<>), typeof(OutboxCommandHandler<>));//rejestracja dekoratora , musi byc try bo jakby nie bylo zadnej implementacji to by wywalilo, rejestracja jako open generic (czyli typeof)
 
             //scanowanie assembly - chcemy zeby nasze assembly zrejestrowalo wszystkie implementacje idomaineventhandler
             //zakladajac ze sa one tutaj poda w naszych wartwach
@@ -49,7 +54,8 @@ namespace Pacco.Services.Availability.Infrastructure
                     .AddMongoRepository<ResourceDocument, Guid>("resources") //rejestrujemy mongo repo
                     .AddRabbitMq()
                     .AddSwaggerDocs()
-                    .AddWebApiSwaggerDocs();
+                    .AddWebApiSwaggerDocs()
+                    .AddMessageOutbox(o => o.AddMongo()); //skonfigurowana na mongo//wpinka do obslugi przypadkow gdy siec sie zerwie a my chcemy miec pewnosc obslugi naszych wiadomosci lub tego ze nie beda one przetworzone kilkukrotnie przychodzac do nasz
 
             return builder;
         }
