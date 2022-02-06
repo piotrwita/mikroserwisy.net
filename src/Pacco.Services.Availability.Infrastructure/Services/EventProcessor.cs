@@ -58,7 +58,7 @@ namespace Pacco.Services.Availability.Infrastructure.Services
                 //musimy uzyc refleksji, czyli make generictype
                 var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(domainEventType);
                 dynamic handlers = scope.ServiceProvider.GetService(handlerType);
-                //foreach(var handler in handlers)
+                //foreach (var handler in handlers)
                 //{
                 //    await handler.HandlerAsync((dynamic)domainEvent);
                 //}

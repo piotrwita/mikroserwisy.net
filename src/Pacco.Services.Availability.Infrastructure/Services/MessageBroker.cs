@@ -16,14 +16,16 @@ namespace Pacco.Services.Availability.Infrastructure.Services
         private readonly IMessageOutbox _outbox;
         private readonly OutboxOptions _outboxOptions;
         private readonly IMessagePropertiesAccessor _messagePropertiesAccessor;
+        private readonly ICorrelationContextAccessor _correlationContextAccessor;
 
         public MessageBroker(IBusPublisher busPublisher, IMessageOutbox outbox, OutboxOptions outboxOptions,
-            IMessagePropertiesAccessor messagePropertiesAccessor)
+            IMessagePropertiesAccessor messagePropertiesAccessor, ICorrelationContextAccessor correlationContextAccessor)
         {
             _busPublisher = busPublisher;
             _outbox = outbox;
             _outboxOptions = outboxOptions;
             _messagePropertiesAccessor = messagePropertiesAccessor;
+            _correlationContextAccessor = correlationContextAccessor;
         }
 
         public Task PublishAsync(params IEvent[] events) => PublishAsync(events?.AsEnumerable());
@@ -32,22 +34,27 @@ namespace Pacco.Services.Availability.Infrastructure.Services
         {
             if (events is null) return;
 
+            //kluczowe dane zeby flow w calym przeplywie async bylo pospinane
+            //async robimy tylko ciezkie zlozone operacje
+            //reszta prostych operacji synchronicznie zeby zachwoac prostolinijnosc dla przebiegu
+            var messageProperties = _messagePropertiesAccessor.MessageProperties;
+            var originatedMessageId = messageProperties?.MessageId; //? nullcheck //id wiadomosoci w rabbicie
+            var correlationId = messageProperties?.CorrelationId;//id calego flow w rabbicie
+            var correlationContext = _correlationContextAccessor.CorrelationContext; //kontekst w obrebie wiadomosci ktora w danym momencie przetwarzamy
+
             foreach (var @event in events)
             {
                 if (@event is null) continue;
-
-                var messageProperties = _messagePropertiesAccessor.MessageProperties;
-                var originatedMessageId = messageProperties?.MessageId; //? nullcheck
 
                 var messageId = Guid.NewGuid().ToString("N"); //ten format to guid bez myslnikow
 
                 if(_outbox.Enabled)
                 {
-                    await _outbox.SendAsync(@event, originatedMessageId, messageId);
+                    await _outbox.SendAsync(@event, originatedMessageId, messageId, correlationId, messageContext: correlationContext);
                     continue;
                 }
 
-                await _busPublisher.PublishAsync(@event, messageId);
+                await _busPublisher.PublishAsync(@event, messageId, correlationId, messageContext: correlationContext);
             }
 
         }
