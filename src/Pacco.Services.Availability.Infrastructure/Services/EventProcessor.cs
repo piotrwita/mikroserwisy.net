@@ -57,11 +57,11 @@ namespace Pacco.Services.Availability.Infrastructure.Services
                 //to co tu robimy robimy dlatego ze nie mozemy przekazac jako generic type stricte jakiegos type
                 //musimy uzyc refleksji, czyli make generictype
                 var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(domainEventType);
-                dynamic handlers = scope.ServiceProvider.GetService(handlerType);
-                //foreach (var handler in handlers)
-                //{
-                //    await handler.HandlerAsync((dynamic)domainEvent);
-                //}
+                dynamic handlers = scope.ServiceProvider.GetServices(handlerType);
+                foreach (var handler in handlers)
+                {
+                    await handler.HandlerAsync((dynamic)domainEvent);
+                }
                 //czyli jezeli sa jakies handlery dla zdarzen domenowych to tu powyzej zostaly one wlasnie obluzone 
 
                 var integrationEvent = _eventMapper.Map(domainEvent);

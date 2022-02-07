@@ -30,7 +30,11 @@ using Pacco.Services.Availability.Infrastructure.Services.Clients;
 using Pacco.Services.Identity.Application.Events;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
+
+//widoczne internale dla projektu endtoend
+[assembly: InternalsVisibleTo("Pacco.Services.Availability.Tests.EndToEnd")]
 
 namespace Pacco.Services.Availability.Infrastructure
 {
