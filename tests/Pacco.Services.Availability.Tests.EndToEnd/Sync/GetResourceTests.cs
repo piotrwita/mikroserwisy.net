@@ -28,7 +28,7 @@ namespace Pacco.Services.Availability.Tests.EndToEnd.Sync
             //nie potrzebujemy nawet arrange poniewaz baza nie zawiera id
             var response = await Act();
 
-            response.ShouldBeNull();
+            response.ShouldNotBeNull();
             response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         }
 
@@ -39,7 +39,7 @@ namespace Pacco.Services.Availability.Tests.EndToEnd.Sync
 
             var response = await Act();
 
-            response.ShouldBeNull();
+            response.ShouldNotBeNull();
             //mozna dodac do helpera
             var content = await response.Content.ReadAsStringAsync();
             var dto = JsonConvert.DeserializeObject<ResourceDto>(content);

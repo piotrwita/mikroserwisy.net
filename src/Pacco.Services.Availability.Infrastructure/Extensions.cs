@@ -35,6 +35,7 @@ using System.Text;
 
 //widoczne internale dla projektu endtoend
 [assembly: InternalsVisibleTo("Pacco.Services.Availability.Tests.EndToEnd")]
+[assembly: InternalsVisibleTo("Pacco.Services.Availability.Tests.Integration")]
 
 namespace Pacco.Services.Availability.Infrastructure
 {
