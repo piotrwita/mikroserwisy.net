@@ -23,6 +23,7 @@ using Pacco.Services.Availability.Application.Srervices.Clients;
 using Pacco.Services.Availability.Core.Repositories;
 using Pacco.Services.Availability.Infrastructure.Decorators;
 using Pacco.Services.Availability.Infrastructure.Exceptions;
+using Pacco.Services.Availability.Infrastructure.Logging;
 using Pacco.Services.Availability.Infrastructure.Mongo.Documents;
 using Pacco.Services.Availability.Infrastructure.Mongo.Repositories;
 using Pacco.Services.Availability.Infrastructure.Services;
@@ -72,7 +73,8 @@ namespace Pacco.Services.Availability.Infrastructure
                     .AddMessageOutbox(o => o.AddMongo()) //skonfigurowana na mongo//wpinka do obslugi przypadkow gdy siec sie zerwie a my chcemy miec pewnosc obslugi naszych wiadomosci lub tego ze nie beda one przetworzone kilkukrotnie przychodzac do nasz
                     .AddHttpClient() //rejestracja z poziomu convey
                     .AddConsul()
-                    .AddFabio();
+                    .AddFabio()
+                    .AddHandlersLogging(); //wywolanie rozszerzenia logowania
 
             return builder;
         }
