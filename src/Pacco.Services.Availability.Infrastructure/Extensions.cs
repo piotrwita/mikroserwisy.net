@@ -9,6 +9,7 @@ using Convey.MessageBrokers.CQRS;
 using Convey.MessageBrokers.Outbox;
 using Convey.MessageBrokers.Outbox.Mongo;
 using Convey.MessageBrokers.RabbitMQ;
+using Convey.Metrics.AppMetrics;
 using Convey.Persistence.MongoDB;
 using Convey.WebApi;
 using Convey.WebApi.CQRS;
@@ -24,6 +25,7 @@ using Pacco.Services.Availability.Core.Repositories;
 using Pacco.Services.Availability.Infrastructure.Decorators;
 using Pacco.Services.Availability.Infrastructure.Exceptions;
 using Pacco.Services.Availability.Infrastructure.Logging;
+using Pacco.Services.Availability.Infrastructure.Metrics;
 using Pacco.Services.Availability.Infrastructure.Mongo.Documents;
 using Pacco.Services.Availability.Infrastructure.Mongo.Repositories;
 using Pacco.Services.Availability.Infrastructure.Services;
@@ -50,7 +52,8 @@ namespace Pacco.Services.Availability.Infrastructure
             builder.Services.AddTransient<IEventProcessor, EventProcessor>();
             builder.Services.AddSingleton<IEventMapper, EventMapper>();
             builder.Services.AddTransient<ICustomersServiceClient, CustomersServiceClient>();
-
+            builder.Services.AddSingleton<CustomMetricsMiddleware>();
+            builder.Services.AddHostedService<MetricsJob>(); //
             
             builder.Services.TryDecorate(typeof(ICommandHandler<>), typeof(OutboxCommandHandler<>));//rejestracja dekoratora , musi byc try bo jakby nie bylo zadnej implementacji to by wywalilo, rejestracja jako open generic (czyli typeof)
 
@@ -74,7 +77,8 @@ namespace Pacco.Services.Availability.Infrastructure
                     .AddHttpClient() //rejestracja z poziomu convey
                     .AddConsul()
                     .AddFabio()
-                    .AddHandlersLogging(); //wywolanie rozszerzenia logowania
+                    .AddHandlersLogging() //wywolanie rozszerzenia logowania
+                    .AddMetrics();
 
             return builder;
         }
@@ -82,10 +86,13 @@ namespace Pacco.Services.Availability.Infrastructure
         //coś na wzór asp middleware - szereg kolejnych metod pozwalających na wpinanie/ setupowanie
         public static IApplicationBuilder UserInfrastructure(this IApplicationBuilder app)
         {
+            //integracja middleware
             app.UseErrorHandler() //middleware ktory wpina sie w asp.net.core, gdy wpada nam request(http kontekst) jest globalny try catch, probujemy wykonac kolejny krok w middleware jezeli sie nie powiedzie, logujemy blad i zwracamy response serwera z odpowiednim bledem
                 .UseConvey()
                 .UsePublicContracts<ContractAttribute>() // wpiecie naszych konkraktow oznaczonych markerem contractattribute
                 .UseSwaggerDocs() //dodanie jako middleware
+                .UseMetrics()
+                .UseMiddleware<CustomMetricsMiddleware>()
                 .UseRabbitMq()//zawsze na samym koncu - po tym tylko suby
                 .SubscribeEvent<SignedUp>()//wywołuje event zdefiniowany na poziomie mikroserwisu//rejestracja czy subskrypcja - usluga dostepnosci jest zainteresowana wiadomoscia signup z identity
                 .SubscribeCommand<AddResource>()

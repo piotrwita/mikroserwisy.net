@@ -15,6 +15,7 @@ using Pacco.Services.Availability.Application.Queries;
 using Pacco.Services.Availability.Application.DTO;
 using System.Collections.Generic;
 using Convey.Logging;
+using Convey.Secrets.Vault;
 
 namespace Pacco.Services.Availability.Api
 {
@@ -48,6 +49,7 @@ namespace Pacco.Services.Availability.Api
                         .Post<AddResource>("resources", afterDispatch: (cmd, ctx) =>
                             ctx.Response.Created($"resources/{cmd.ResourceId}"))
                         .Post<ReserveResource>("resources/{resourceId}/reservations/{dateTime}")))
-                .UseLogging();//metoda rozszerzajaca pod serilog
+                .UseLogging()//metoda rozszerzajaca pod serilog
+                .UseVault();
     }
 }
