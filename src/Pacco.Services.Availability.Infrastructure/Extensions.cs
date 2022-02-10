@@ -1,5 +1,6 @@
 ﻿using Convey;
 using Convey.CQRS.Commands;
+using Convey.CQRS.Events;
 using Convey.CQRS.Queries;
 using Convey.Discovery.Consul;
 using Convey.Docs.Swagger;
@@ -11,6 +12,8 @@ using Convey.MessageBrokers.Outbox.Mongo;
 using Convey.MessageBrokers.RabbitMQ;
 using Convey.Metrics.AppMetrics;
 using Convey.Persistence.MongoDB;
+using Convey.Tracing.Jaeger;
+using Convey.Tracing.Jaeger.RabbitMQ;
 using Convey.WebApi;
 using Convey.WebApi.CQRS;
 using Convey.WebApi.Swagger;
@@ -30,6 +33,7 @@ using Pacco.Services.Availability.Infrastructure.Mongo.Documents;
 using Pacco.Services.Availability.Infrastructure.Mongo.Repositories;
 using Pacco.Services.Availability.Infrastructure.Services;
 using Pacco.Services.Availability.Infrastructure.Services.Clients;
+using Pacco.Services.Availability.Infrastructure.Tracing;
 using Pacco.Services.Identity.Application.Events;
 using System;
 using System.Collections.Generic;
@@ -56,6 +60,8 @@ namespace Pacco.Services.Availability.Infrastructure
             builder.Services.AddHostedService<MetricsJob>(); //
             
             builder.Services.TryDecorate(typeof(ICommandHandler<>), typeof(OutboxCommandHandler<>));//rejestracja dekoratora , musi byc try bo jakby nie bylo zadnej implementacji to by wywalilo, rejestracja jako open generic (czyli typeof)
+            builder.Services.TryDecorate(typeof(IEventHandler<>), typeof(OutboxEventHandler<>));
+            builder.Services.TryDecorate(typeof(ICommandHandler<>), typeof(JeagerCommandHandlerDecorator<>));
 
             //scanowanie assembly - chcemy zeby nasze assembly zrejestrowalo wszystkie implementacje idomaineventhandler
             //zakladajac ze sa one tutaj poda w naszych wartwach
@@ -70,7 +76,7 @@ namespace Pacco.Services.Availability.Infrastructure
                     .AddExceptionToMessageMapper<ExceptionToMessageMapper>() //rejestracja w kontenerze jako singleton middleware i nasz interface jako typ t
                     .AddMongo()//dodajemy bazkę mongoDB
                     .AddMongoRepository<ResourceDocument, Guid>("resources") //rejestrujemy mongo repo
-                    .AddRabbitMq()
+                    .AddRabbitMq(plugins: p => p.AddJaegerRabbitMqPlugin()) //wtyczka na plugny do rabita - podajemy jeager plugin ktory tworzy spany. Jezeli tego nie chcemy zostawiamy samo RabbitMq()
                     .AddSwaggerDocs()
                     .AddWebApiSwaggerDocs()
                     .AddMessageOutbox(o => o.AddMongo()) //skonfigurowana na mongo//wpinka do obslugi przypadkow gdy siec sie zerwie a my chcemy miec pewnosc obslugi naszych wiadomosci lub tego ze nie beda one przetworzone kilkukrotnie przychodzac do nasz
@@ -78,7 +84,8 @@ namespace Pacco.Services.Availability.Infrastructure
                     .AddConsul()
                     .AddFabio()
                     .AddHandlersLogging() //wywolanie rozszerzenia logowania
-                    .AddMetrics();
+                    .AddMetrics()
+                    .AddJaeger();
 
             return builder;
         }
@@ -89,6 +96,7 @@ namespace Pacco.Services.Availability.Infrastructure
             //integracja middleware
             app.UseErrorHandler() //middleware ktory wpina sie w asp.net.core, gdy wpada nam request(http kontekst) jest globalny try catch, probujemy wykonac kolejny krok w middleware jezeli sie nie powiedzie, logujemy blad i zwracamy response serwera z odpowiednim bledem
                 .UseConvey()
+                .UseJaeger()
                 .UsePublicContracts<ContractAttribute>() // wpiecie naszych konkraktow oznaczonych markerem contractattribute
                 .UseSwaggerDocs() //dodanie jako middleware
                 .UseMetrics()
